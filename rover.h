@@ -2,19 +2,28 @@
 #define ROVER_H
 
 #include <ESP32Servo.h>
+#include "utils.h"
+#include "motor.h"
 
 class Rover {
   private:
-    int pin_fl, pin_fr, pin_bl, pin_br;
-    int pos_fl, pos_fr, pos_bl, pos_br;
+    ServoPins servo_pins;
+    ServoPositions servo_positions;
+    Servo servo_fl, servo_fr, servo_bl, servo_br;
 
-    Servo fl, fr, bl, br;
+    MotorPins motor_pins;
+    Motor motor_fl, motor_fr, motor_bl, motor_br;
 
   public:
-    Rover(int pinfl, int pinfr, int pinbl, int pinbr);
+    Rover(ServoPins default_servo_pins, ServoPositions default_pos, MotorPins default_motor_pins);
     
+    void set_servo_positions(ServoPositions target_positions);
+    void write_servo_positions();
+
+    void set_motor_speed(int speed, bool forward);
+
     void update();
-}
+};
 
 
 #endif
