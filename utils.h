@@ -40,6 +40,11 @@ struct MotorPins {
   MotorPinSet br;
 };
 
+struct AttitudeCorrections {
+  float roll;
+  float pitch;
+};
+
 // PWM Settings
 const int pwm_freq = 5000;
 const int pwm_resolution = 8;

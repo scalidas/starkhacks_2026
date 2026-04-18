@@ -1,10 +1,12 @@
 #include <ESP32Servo.h>
 #include "rover.h"
-
+#include "imu.h"
+#include <algorithm>
 
 Rover::Rover(ServoPins default_servo_pins, ServoPositions default_pos, MotorPins default_motor_pins) : 
 servo_fl(), servo_fr(), servo_bl(), servo_br(),
-motor_fl(default_motor_pins.fl), motor_fr(default_motor_pins.fr), motor_bl(default_motor_pins.bl), motor_br(default_motor_pins.br)
+motor_fl(default_motor_pins.fl), motor_fr(default_motor_pins.fr), motor_bl(default_motor_pins.bl), motor_br(default_motor_pins.br),
+pid_controller({0, 0}, 0, 0, 0)
 {
   servo_pins = default_servo_pins;
   motor_pins = default_motor_pins;
@@ -15,11 +17,33 @@ motor_fl(default_motor_pins.fl), motor_fr(default_motor_pins.fr), motor_bl(defau
   servo_br.attach(servo_pins.br);
 
   servo_positions = default_pos;
+  neutral_positions = default_pos;
+
   write_servo_positions();
 
-
-
   set_motor_speed(0, 1);
+}
+
+void Rover::update() {
+  //Get IMU data
+  Orientation curr_orientation = getFilteredOrientation();
+
+  unsigned long current_time = millis();
+  float dt = (float) current_time - last_update;
+
+  AttitudeCorrections corr = pid_controller.compute(curr_orientation, dt);
+  last_update = current_time;
+
+  ServoPositions cmd;
+
+  // Mapping (IMPORTANT PART)
+  cmd.fl = std::clamp(neutral_positions.fl + corr.pitch + corr.roll, 0.0f, 180.0f);
+  cmd.fr = std::clamp(neutral_positions.fr + corr.pitch - corr.roll, 0.0f, 180.0f);
+  cmd.bl = std::clamp(neutral_positions.bl - corr.pitch + corr.roll, 0.0f, 180.0f);
+  cmd.br = std::clamp(neutral_positions.br - corr.pitch - corr.roll, 0.0f, 180.0f);
+
+  set_servo_positions(cmd);
+  write_servo_positions();
 }
 
 void Rover::set_servo_positions(ServoPositions target_positions) {

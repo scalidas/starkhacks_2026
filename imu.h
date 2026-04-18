@@ -1,7 +1,6 @@
 #ifndef IMU_H
 #define IMU_H
 
-#include <Arduino.h> // Needed for float, Serial, etc.
 #include <Adafruit_MPU6050.h>
 #include "utils.h"
 
