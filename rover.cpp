@@ -24,16 +24,13 @@ pid_controller({0, 0}, 0, 0, 0)
   set_motor_speed(0, 1);
 }
 
+
 // Adjust this constant to change how aggressively the robot reacts to tilt
 const float SENSITIVITY = 5.5; 
-const float WHEELBASE = 169.46;
+
 void Rover::update() {
     // 1. Get current orientation from IMU
     Orientation current = getFilteredOrientation();
-
-    //Calculate the linear distance required for each wheel to travel
-    float pitch_correction_mm = WHEELBASE * std::sin(current.pitch * M_PI / 180.0);
-    
 
     // 2. Calculate the required offsets for each wheel
     // We want to move the servo in the OPPOSITE direction of the tilt
@@ -48,7 +45,7 @@ void Rover::update() {
     // Apply the mix (signs may need flipping depending on your servo orientation)
     offsets.fl = -pitch_adj + roll_adj;
     offsets.fr = pitch_adj - roll_adj;
-    offsets.bl =  pitch_adj + roll_adj;
+    offsets.bl = pitch_adj + roll_adj;
     offsets.br =  -pitch_adj - roll_adj;
 
     // 3. Apply offsets to neutral positions
@@ -61,6 +58,8 @@ void Rover::update() {
     // 4. Update the robot hardware
     set_servo_positions(target);
     write_servo_positions();
+    
+    last_update = millis();
 }
 
 void Rover::set_servo_positions(ServoPositions target_positions) {

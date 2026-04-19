@@ -174,9 +174,9 @@ void setup() {
 
 void loop() {
   handleSerial();
-  // unsigned long current_time = millis();
-  // if (current_time - last_time > 20) {
-  //   last_time = current_time;
-  //   rover.update();
-  // }
+  unsigned long current_time = millis();
+  if (current_time - last_time > 20) {
+    last_time = current_time;
+    rover.update();
+  }
 }
