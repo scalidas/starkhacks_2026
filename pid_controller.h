@@ -2,6 +2,8 @@
 #define PID_H
 #include "utils.h"
 
+#define PITCH_GAIN 1.3f
+
 class PIDController {
   private:
     float kp, kd, ki;
@@ -15,6 +17,9 @@ class PIDController {
     // State for pitch
     float prev_error_pitch;
     float integral_pitch;
+    float prev_roll, prev_pitch;
+
+    AttitudeCorrections last_out;
 
   public:
     PIDController(Orientation init_target, float init_kp, float init_kd, float init_ki);

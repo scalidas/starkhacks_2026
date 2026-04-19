@@ -40,11 +40,13 @@ MotorPins motorpins = {pinset_fl, pinset_fr, pinset_bl, pinset_br};
 
 MotorSpeeds motor_speeds = {0, 0, 0, 0, 0, 0, 0, 0};
 
-ServoPositions servopos = {102.5, 95, 110, 95};
+ServoPositions servopos = {100, 95, 110, 90};
 
 Rover rover(servopins, servopos, motorpins);
 
 String inputBuffer = "";
+
+unsigned long last_time;
 
 void handleSerial() {
   while (Serial.available()) {
@@ -166,15 +168,15 @@ void setup() {
   Serial.println("  I <value>");
   Serial.println("  D <value>");
   Serial.println("  PID <p> <i> <d>");
+
+  last_time = 0;
 }
 
 void loop() {
   handleSerial();
-  Orientation data = getFilteredOrientation();
-  
-  Serial.print("P: "); Serial.print(data.pitch);
-  Serial.print(" R: "); Serial.println(data.roll);
-
-  rover.update();
-  delay(50);
+  // unsigned long current_time = millis();
+  // if (current_time - last_time > 20) {
+  //   last_time = current_time;
+  //   rover.update();
+  // }
 }

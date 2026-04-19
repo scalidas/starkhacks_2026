@@ -24,26 +24,43 @@ pid_controller({0, 0}, 0, 0, 0)
   set_motor_speed(0, 1);
 }
 
+// Adjust this constant to change how aggressively the robot reacts to tilt
+const float SENSITIVITY = 5.5; 
+const float WHEELBASE = 169.46;
 void Rover::update() {
-  //Get IMU data
-  Orientation curr_orientation = getFilteredOrientation();
+    // 1. Get current orientation from IMU
+    Orientation current = getFilteredOrientation();
 
-  unsigned long current_time = millis();
-  float dt = (float) (current_time - last_update) / 1000;
+    //Calculate the linear distance required for each wheel to travel
+    float pitch_correction_mm = WHEELBASE * std::sin(current.pitch * M_PI / 180.0);
+    
 
-  AttitudeCorrections corr = pid_controller.compute(curr_orientation, dt);
-  last_update = current_time;
+    // 2. Calculate the required offsets for each wheel
+    // We want to move the servo in the OPPOSITE direction of the tilt
+    // If pitch is positive (front up), we subtract from front servos to lower the body
+    ServoPositions offsets;
 
-  ServoPositions cmd;
+    // Pitch compensation: Front and Back move oppositely
+    float pitch_adj = current.pitch * SENSITIVITY;
+    // Roll compensation: Left and Right move oppositely
+    float roll_adj = current.roll * SENSITIVITY;
 
-  // Mapping (IMPORTANT PART)
-  cmd.fl = std::clamp((float)neutral_positions.fl + corr.pitch - corr.roll, 0.0f, 180.0f);
-  cmd.fr = std::clamp((float)neutral_positions.fr - corr.pitch + corr.roll, 0.0f, 180.0f);
-  cmd.bl = std::clamp((float)neutral_positions.bl - corr.pitch - corr.roll, 0.0f, 180.0f);
-  cmd.br = std::clamp((float)neutral_positions.br + corr.pitch + corr.roll, 0.0f, 180.0f);
+    // Apply the mix (signs may need flipping depending on your servo orientation)
+    offsets.fl = -pitch_adj + roll_adj;
+    offsets.fr = pitch_adj - roll_adj;
+    offsets.bl =  pitch_adj + roll_adj;
+    offsets.br =  -pitch_adj - roll_adj;
 
-  set_servo_positions(cmd);
-  write_servo_positions();
+    // 3. Apply offsets to neutral positions
+    ServoPositions target;
+    target.fl = constrain(neutral_positions.fl + offsets.fl, 0, 180);
+    target.fr = constrain(neutral_positions.fr + offsets.fr, 0, 180);
+    target.bl = constrain(neutral_positions.bl + offsets.bl, 0, 180);
+    target.br = constrain(neutral_positions.br + offsets.br, 0, 180);
+
+    // 4. Update the robot hardware
+    set_servo_positions(target);
+    write_servo_positions();
 }
 
 void Rover::set_servo_positions(ServoPositions target_positions) {

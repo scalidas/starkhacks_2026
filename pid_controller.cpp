@@ -28,29 +28,30 @@ void PIDController::set_ki(float new_ki) {
 
 AttitudeCorrections PIDController::compute(Orientation current, float dt) {
   AttitudeCorrections out;
+  if (dt <= 0) return last_out; // Guard against division by zero
 
-  // Errors. Deadband introduced to avoid overcorrections
+  // 1. Errors (No deadband here!)
   float err_roll  = target.roll  - current.roll;
-  if (std::abs(err_roll) < 3.0) err_roll = 0;
-
   float err_pitch = target.pitch - current.pitch;
-  if (std::abs(err_pitch) < 3.0) err_pitch = 0;
 
-  // Integral
-  integral_roll  += err_roll * dt;
-  integral_pitch += err_pitch * dt;
+  // 2. Integral with Anti-Windup (Clamping)
+  float i_limit = 20.0; // Adjust based on your servo range
+  integral_roll  = std::clamp(integral_roll + (err_roll * dt), -i_limit, i_limit);
+  integral_pitch = std::clamp(integral_pitch + (err_pitch * dt), -i_limit, i_limit);
 
-  // Derivative
-  float d_roll  = (err_roll  - prev_error_roll)  / dt;
-  float d_pitch = (err_pitch - prev_error_pitch) / dt;
+  // 3. Derivative on Measurement (Reduces jitter/kicks)
+  // We use (current - prev) instead of (error - prev_error) to avoid spikes during target changes
+  float d_roll  = (current.roll  - prev_roll)  / dt;
+  float d_pitch = (current.pitch - prev_pitch) / dt;
 
-  // PID output
-  out.roll  = kp * err_roll  + ki * integral_roll  + kd * d_roll;
-  out.pitch = kp * err_pitch + ki * integral_pitch + kd * d_pitch;
+  // 4. PID Output
+  out.roll  = (kp * err_roll)  + (ki * integral_roll)  - (kd * d_roll);
+  out.pitch = (kp * err_pitch) + (ki * integral_pitch) - (kd * d_pitch);
 
   // Save state
-  prev_error_roll  = err_roll;
-  prev_error_pitch = err_pitch;
+  prev_roll = current.roll;
+  prev_pitch = current.pitch;
+  last_out = out;
 
   return out;
 }
