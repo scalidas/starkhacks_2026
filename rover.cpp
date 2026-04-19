@@ -25,9 +25,6 @@ pid_controller({0, 0}, 0, 0, 0)
 }
 
 
-// Adjust this constant to change how aggressively the robot reacts to tilt
-const float SENSITIVITY = 5.5; 
-
 void Rover::update() {
     // 1. Get current orientation from IMU
     Orientation current = getFilteredOrientation();
@@ -38,9 +35,9 @@ void Rover::update() {
     ServoPositions offsets;
 
     // Pitch compensation: Front and Back move oppositely
-    float pitch_adj = current.pitch * SENSITIVITY;
+    float pitch_adj = current.pitch * sensitivity;
     // Roll compensation: Left and Right move oppositely
-    float roll_adj = current.roll * SENSITIVITY;
+    float roll_adj = current.roll * sensitivity;
 
     // Apply the mix (signs may need flipping depending on your servo orientation)
     offsets.fl = -pitch_adj + roll_adj;
@@ -66,16 +63,12 @@ void Rover::set_servo_positions(ServoPositions target_positions) {
   servo_positions = target_positions;
 }
 
-void Rover::set_kp(float new_kp) {
-  pid_controller.set_kp(new_kp);
+void Rover::set_sensitivity(float new_sensitivity) {
+  sensitivity = new_sensitivity;
 }
 
-void Rover::set_kd(float new_kd) {
-  pid_controller.set_kd(new_kd);
-}
-
-void Rover::set_ki(float new_ki) {
-  pid_controller.set_ki(new_ki);
+float Rover::get_sensitivity() {
+  return sensitivity;
 }
 
 void Rover::write_servo_positions() {

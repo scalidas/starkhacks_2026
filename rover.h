@@ -19,6 +19,8 @@ class Rover {
 
     PIDController pid_controller;
 
+    float sensitivity;
+
     unsigned long last_update;
 
   public:
@@ -30,10 +32,8 @@ class Rover {
     void set_motor_speed(int speed, bool forward);
     void set_motor_speed(MotorSpeeds speeds);
 
-    void set_kp(float new_kp);
-    void set_kd(float new_kd);
-    void set_ki(float new_ki);
-
+    void set_sensitivity(float new_sensitivity);
+    float get_sensitivity();
     void update();
 };
 
