@@ -18,10 +18,10 @@ struct ServoPins {
 
 //Struct of servo positions. Always in degrees
 struct ServoPositions {
-  int fl;
-  int fr;
-  int bl;
-  int br;
+  float fl;
+  float fr;
+  float bl;
+  float br;
 };
 
 

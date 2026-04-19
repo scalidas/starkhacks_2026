@@ -29,6 +29,10 @@ class Rover {
 
     void set_motor_speed(int speed, bool forward);
 
+    void set_kp(float new_kp);
+    void set_kd(float new_kd);
+    void set_ki(float new_ki);
+
     void update();
 };
 

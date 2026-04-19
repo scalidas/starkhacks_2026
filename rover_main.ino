@@ -3,67 +3,106 @@
 #include "motor.h"
 #include "rover.h"
 
-ServoPins servopins = {4, 5, 6, 7};
-ServoPositions servopos = {180, 0, 180, 0};
-MotorPins motorpins = {0, 0, 0, 0};
+#define SERVO_PIN_FL 4
+#define SERVO_PIN_FR 5
+#define SERVO_PIN_BL 6
+#define SERVO_PIN_BR 7
+
+/*
+20 and 21 reserved for IMU
+*/
+
+//Motor FL and FR are on A pins. Motor BL and BR are on B pins. Left controller and right controller
+#define MOTOR_FL_IN1 9
+#define MOTOR_FL_IN2 10
+#define MOTOR_FL_PWM 11
+MotorPinSet pinset_fl = {MOTOR_FL_IN1, MOTOR_FL_IN2, MOTOR_FL_PWM};
+
+#define MOTOR_FR_IN1 17
+#define MOTOR_FR_IN2 18
+#define MOTOR_FR_PWM 12
+MotorPinSet pinset_fr = {MOTOR_FR_IN1, MOTOR_FR_IN2, MOTOR_FR_PWM};
+
+
+#define MOTOR_BL_IN1 9
+#define MOTOR_BL_IN2 10
+#define MOTOR_BL_PWM 13
+MotorPinSet pinset_bl = {MOTOR_BL_IN1, MOTOR_BL_IN2, MOTOR_BL_PWM};
+
+
+#define MOTOR_BR_IN1 17
+#define MOTOR_BR_IN2 18
+#define MOTOR_BR_PWM 14
+MotorPinSet pinset_br = {MOTOR_BR_IN1, MOTOR_BR_IN2, MOTOR_BR_PWM};
+
+
+ServoPins servopins = {SERVO_PIN_FL, SERVO_PIN_FR, SERVO_PIN_BL, SERVO_PIN_BR};
+MotorPins motorpins = {pinset_fl, pinset_fr, pinset_bl, pinset_br};
+
+ServoPositions servopos = {160, 55, 120, 35};
 
 Rover rover(servopins, servopos, motorpins);
 
 String inputBuffer = "";
 
-void setup() {
-  Serial.begin(115200);
-  initIMU();
-
-  Serial.println("Enter servo positions: fl fr bl br (0-180)");
-}
-
 void handleSerial() {
   while (Serial.available()) {
     char c = Serial.read();
 
-    // End of line → parse input
     if (c == '\n') {
-      int fl, fr, bl, br;
+      float p, i, d;
 
-      // Parse 4 integers
-      int parsed = sscanf(inputBuffer.c_str(), "%d %d %d %d", &fl, &fr, &bl, &br);
+      // --- Case 1: full PID update ---
+      if (sscanf(inputBuffer.c_str(), "PID %f %f %f", &p, &i, &d) == 3) {
+        rover.set_kp(p);
+        rover.set_ki(i);
+        rover.set_kd(d);
 
-      if (parsed == 4) {
-        // Clamp values (safety)
-        servopos.fl = constrain(fl, 0, 180);
-        servopos.fr = constrain(fr, 0, 180);
-        servopos.bl = constrain(bl, 0, 180);
-        servopos.br = constrain(br, 0, 180);
-
-        rover.set_servo_positions(servopos);
-        rover.write_servo_positions();
-
-        Serial.print("Updated: ");
-        Serial.print(servopos.fl); Serial.print(" ");
-        Serial.print(servopos.fr); Serial.print(" ");
-        Serial.print(servopos.bl); Serial.print(" ");
-        Serial.println(servopos.br);
-      } else {
-        Serial.println("Invalid format. Use: fl fr bl br");
+        Serial.print("Set PID → ");
+        Serial.print(p); Serial.print(" ");
+        Serial.print(i); Serial.print(" ");
+        Serial.println(d);
       }
 
-      inputBuffer = ""; // reset buffer
+      // --- Case 2: individual updates ---
+      else if (sscanf(inputBuffer.c_str(), "P %f", &p) == 1) {
+        rover.set_kp(p);
+        Serial.print("Set Kp → "); Serial.println(p);
+      }
+      else if (sscanf(inputBuffer.c_str(), "I %f", &i) == 1) {
+        rover.set_ki(i);
+        Serial.print("Set Ki → "); Serial.println(i);
+      }
+      else if (sscanf(inputBuffer.c_str(), "D %f", &d) == 1) {
+        rover.set_kd(d);
+        Serial.print("Set Kd → "); Serial.println(d);
+      }
+      else {
+        Serial.println("Invalid command. Use: P x | I x | D x | PID p i d");
+      }
+
+      inputBuffer = "";
     } else {
       inputBuffer += c;
     }
   }
 }
 
+void setup() {
+  Serial.begin(115200);
+  initIMU();
+
+  Serial.println("PID tuning ready:");
+  Serial.println("Commands:");
+  Serial.println("  P <value>");
+  Serial.println("  I <value>");
+  Serial.println("  D <value>");
+  Serial.println("  PID <p> <i> <d>");
+}
+
 void loop() {
   handleSerial();
 
-  // Orientation o = getFilteredOrientation();
-
-  // Serial.print("Roll: ");
-  // Serial.print(o.roll, 1);
-  // Serial.print(" | Pitch: ");
-  // Serial.println(o.pitch, 1);
-
-  delay(100);
+  rover.update();
+  delay(50);
 }

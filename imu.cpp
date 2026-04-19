@@ -37,14 +37,21 @@ Orientation getFilteredOrientation() {
   float dt = (millis() - lastTime) / 1000.0;
   lastTime = millis();
 
-  float accelRoll = atan2(a.acceleration.y, a.acceleration.z) * 180 / PI;
-  float accelPitch = atan2(-a.acceleration.x, sqrt(a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z)) * 180 / PI;
+  float accelRoll  = atan2(-a.acceleration.x, a.acceleration.z) * 180 / PI;
+  float accelPitch = atan2(a.acceleration.y,
+                          sqrt(a.acceleration.x * a.acceleration.x +
+                               a.acceleration.z * a.acceleration.z)) * 180 / PI;
 
-  float gyroXrate = (g.gyro.x - gyroXerror) * 180 / PI;
-  float gyroYrate = (g.gyro.y - gyroYerror) * 180 / PI;
+  float gyroRollRate  = (g.gyro.y - gyroYerror) * 180 / PI; // was X
+  float gyroPitchRate = (g.gyro.x - gyroXerror) * 180 / PI; // was Y
 
-  currentOrientation.roll = alpha * (currentOrientation.roll + gyroXrate * dt) + (1 - alpha) * accelRoll;
-  currentOrientation.pitch = alpha * (currentOrientation.pitch + gyroYrate * dt) + (1 - alpha) * accelPitch;
+  currentOrientation.roll =
+      alpha * (currentOrientation.roll + gyroRollRate * dt) +
+      (1 - alpha) * accelRoll;
+
+  currentOrientation.pitch =
+      alpha * (currentOrientation.pitch + gyroPitchRate * dt) +
+      (1 - alpha) * accelPitch;
 
   return currentOrientation;
 }

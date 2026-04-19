@@ -1,6 +1,7 @@
 #include "pid_controller.h"
 #include "utils.h"
 #include <cmath>
+#include <Arduino.h>
 
 PIDController::PIDController(Orientation init_target, float init_kp, float init_kd, float init_ki) {
   target = init_target;
@@ -30,10 +31,10 @@ AttitudeCorrections PIDController::compute(Orientation current, float dt) {
 
   // Errors. Deadband introduced to avoid overcorrections
   float err_roll  = target.roll  - current.roll;
-  if (std::abs(err_roll) < 1.5) err_roll = 0;
+  if (std::abs(err_roll) < 3.0) err_roll = 0;
 
   float err_pitch = target.pitch - current.pitch;
-  if (std::abs(err_pitch) < 1.5) err_pitch = 0;
+  if (std::abs(err_pitch) < 3.0) err_pitch = 0;
 
   // Integral
   integral_roll  += err_roll * dt;
