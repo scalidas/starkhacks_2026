@@ -45,6 +45,18 @@ struct AttitudeCorrections {
   float pitch;
 };
 
+//Speeds and directions of motors
+struct MotorSpeeds {
+  int fl_speed;
+  int fl_dir;
+  int fr_speed;
+  int fr_dir;
+  int bl_speed;
+  int bl_dir;
+  int br_speed;
+  int br_dir;
+};
+
 // PWM Settings
 const int pwm_freq = 5000;
 const int pwm_resolution = 8;

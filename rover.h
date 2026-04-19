@@ -28,6 +28,7 @@ class Rover {
     void write_servo_positions();
 
     void set_motor_speed(int speed, bool forward);
+    void set_motor_speed(MotorSpeeds speeds);
 
     void set_kp(float new_kp);
     void set_kd(float new_kd);

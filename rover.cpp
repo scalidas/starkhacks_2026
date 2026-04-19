@@ -6,7 +6,7 @@
 Rover::Rover(ServoPins default_servo_pins, ServoPositions default_pos, MotorPins default_motor_pins) : 
 servo_fl(), servo_fr(), servo_bl(), servo_br(),
 motor_fl(default_motor_pins.fl), motor_fr(default_motor_pins.fr), motor_bl(default_motor_pins.bl), motor_br(default_motor_pins.br),
-pid_controller({0, 0}, 2.5, 0, 0)
+pid_controller({0, 0}, 0, 0, 0)
 {
   servo_pins = default_servo_pins;
   motor_pins = default_motor_pins;
@@ -37,10 +37,10 @@ void Rover::update() {
   ServoPositions cmd;
 
   // Mapping (IMPORTANT PART)
-  cmd.fl = std::clamp((float)neutral_positions.fl - corr.pitch + corr.roll, 0.0f, 180.0f);
-  cmd.fr = std::clamp((float)neutral_positions.fr + corr.pitch - corr.roll, 0.0f, 180.0f);
-  cmd.bl = std::clamp((float)neutral_positions.bl + corr.pitch + corr.roll, 0.0f, 180.0f);
-  cmd.br = std::clamp((float)neutral_positions.br - corr.pitch - corr.roll, 0.0f, 180.0f);
+  cmd.fl = std::clamp((float)neutral_positions.fl + corr.pitch - corr.roll, 0.0f, 180.0f);
+  cmd.fr = std::clamp((float)neutral_positions.fr - corr.pitch + corr.roll, 0.0f, 180.0f);
+  cmd.bl = std::clamp((float)neutral_positions.bl - corr.pitch - corr.roll, 0.0f, 180.0f);
+  cmd.br = std::clamp((float)neutral_positions.br + corr.pitch + corr.roll, 0.0f, 180.0f);
 
   set_servo_positions(cmd);
   write_servo_positions();
@@ -74,4 +74,11 @@ void Rover::set_motor_speed(int speed, bool forward) {
   motor_fr.move(speed, forward);
   motor_bl.move(speed, forward);
   motor_br.move(speed, forward);
+}
+
+void Rover::set_motor_speed(MotorSpeeds speeds) {
+  motor_fl.move(speeds.fl_speed, speeds.fl_dir);
+  motor_fr.move(speeds.fr_speed, speeds.fr_dir);
+  motor_bl.move(speeds.bl_speed, speeds.bl_dir);
+  motor_br.move(speeds.br_speed, speeds.br_dir);
 }
